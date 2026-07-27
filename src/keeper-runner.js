@@ -71,9 +71,14 @@ export class KeeperRunner {
     this.stopped = false;
     this.signalHandlersInstalled = false;
     this.consecutiveFailures = 0;
+    this.startedAt = null;
+    this.chainId = null;
+    this.lastCycle = null;
+    this.lastError = null;
   }
 
   async start() {
+    this.startedAt = new Date().toISOString();
     await this.logStartup();
 
     if (this.config.once) {
@@ -90,6 +95,7 @@ export class KeeperRunner {
         this.consecutiveFailures = 0;
       } catch (error) {
         this.consecutiveFailures += 1;
+        this.lastError = formatError(error);
         this.logger.error("Keeper cycle failed", {
           consecutiveFailures: this.consecutiveFailures,
           error: formatError(error)
@@ -115,6 +121,7 @@ export class KeeperRunner {
 
     const network = await this.provider.getNetwork();
     const chainId = BigInt(network.chainId);
+    this.chainId = chainId.toString();
     this.logger.info("Connected network", { chainId: chainId.toString() });
 
     if (
@@ -154,6 +161,7 @@ export class KeeperRunner {
 
     if (workItems.length === 0) {
       this.logger.info("No actionable items found");
+      this.recordCycle({ discovered: 0, processed: 0, succeeded: 0, failed: 0, skipped: 0, cycleStartedAt });
       return;
     }
 
@@ -222,6 +230,32 @@ export class KeeperRunner {
       skipped,
       elapsedMs: Date.now() - cycleStartedAt
     });
+    this.recordCycle({ discovered: workItems.length, processed: selectedItems.length, succeeded, failed, skipped, cycleStartedAt });
+  }
+
+  recordCycle({ discovered, processed, succeeded, failed, skipped, cycleStartedAt }) {
+    this.lastCycle = {
+      discovered,
+      processed,
+      succeeded,
+      failed,
+      skipped,
+      elapsedMs: Date.now() - cycleStartedAt,
+      completedAt: new Date().toISOString()
+    };
+    this.lastError = null;
+  }
+
+  getStatus() {
+    return {
+      id: this.config.telemetryId || this.signer?.address || "keeper",
+      address: this.signer?.address ?? null,
+      chainId: this.chainId,
+      startedAt: this.startedAt,
+      consecutiveFailures: this.consecutiveFailures,
+      lastError: this.lastError,
+      lastCycle: this.lastCycle
+    };
   }
 
   stop(reason = "manual") {

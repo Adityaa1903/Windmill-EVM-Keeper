@@ -4,6 +4,7 @@ import { loadConfig } from "./config.js";
 import { KeeperRunner } from "./keeper-runner.js";
 import { createLogger } from "./logger.js";
 import { createStrategy } from "./strategies/index.js";
+import { startTelemetryServer } from "./telemetry-server.js";
 
 /**
  * @param {{
@@ -55,6 +56,12 @@ async function main() {
     signer,
     contract,
     strategy,
+    logger
+  });
+
+  startTelemetryServer({
+    port: config.telemetryPort,
+    getStatus: () => runner.getStatus(),
     logger
   });
 

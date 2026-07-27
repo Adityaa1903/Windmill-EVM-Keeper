@@ -126,6 +126,11 @@ export function loadConfig({
     variable: "TX_CONFIRMATIONS"
   });
 
+  const telemetryPort = parseInteger(env.TELEMETRY_PORT, 0, {
+    min: 0,
+    variable: "TELEMETRY_PORT"
+  });
+
   const logLevel = (env.LOG_LEVEL ?? "info").trim().toLowerCase();
   if (!LOG_LEVELS.has(logLevel)) {
     throw new Error(
@@ -144,6 +149,8 @@ export function loadConfig({
     intervalMs,
     maxActionsPerCycle,
     txConfirmations,
-    logLevel
+    logLevel,
+    telemetryPort,
+    telemetryId: (env.TELEMETRY_ID ?? "").trim()
   };
 }
