@@ -65,6 +65,11 @@ async function main() {
     logger
   });
 
+  if (config.telemetryOnly) {
+    logger.info("Running in local telemetry-only mode");
+    return;
+  }
+
   await runner.start();
 }
 

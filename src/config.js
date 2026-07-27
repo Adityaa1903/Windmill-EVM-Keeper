@@ -151,6 +151,7 @@ export function loadConfig({
     txConfirmations,
     logLevel,
     telemetryPort,
-    telemetryId: (env.TELEMETRY_ID ?? "").trim()
+    telemetryId: (env.TELEMETRY_ID ?? "").trim(),
+    telemetryOnly: parseBoolean(env.TELEMETRY_ONLY, false)
   };
 }
